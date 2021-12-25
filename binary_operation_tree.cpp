@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cmath>
+#include <cassert>
 
 std::map<std::string, int> operators = {{"(", 0}, {")", 1}, {"+", 2}, {"-", 2}, 
     {"*", 3}, {"/", 3}, {"^", 4}};
@@ -160,10 +161,6 @@ public:
     {
         std::vector<std::string> infix_expr = parse_Operation(str);
         std::vector<std::string> postfix_expr = infix_to_postfix(infix_expr);
-        for (size_t i = 0; i < postfix_expr.size(); i++) {
-            std::cout << postfix_expr[i] << " ";
-        }
-        std::cout << std::endl;
         std::stack<Node*> stack_nodes;
         for (size_t i = 0; i < postfix_expr.size(); i++) {
             if (operators.count(postfix_expr[i])) {
@@ -186,10 +183,6 @@ public:
         clear();
         std::vector<std::string> infix_expr = parse_Operation(str);
         std::vector<std::string> postfix_expr = infix_to_postfix(infix_expr);
-        for (size_t i = 0; i < postfix_expr.size(); i++) {
-            std::cout << postfix_expr[i] << " ";
-        }
-        std::cout << std::endl;
         std::stack<Node*> stack_nodes;
         for (size_t i = 0; i < postfix_expr.size(); i++) {
             if (operators.count(postfix_expr[i])) {
@@ -215,70 +208,22 @@ public:
     }
 
     double calc(Iterator iter = Iterator(nullptr)) {
+        assert(root != nullptr);
         if (*iter == nullptr) {
             return calc_node(root); 
         }
         return calc_node(*iter);
     }
 
-    void print(Iterator iter = Iterator(nullptr), bool postfix = false,
-            std::ostream& os = std::cout) 
+    void print(std::ostream& os = std::cout, bool postfix = false,
+        Iterator iter = Iterator(nullptr))
     {
+        assert(root != nullptr);
         Node* node = root;
         if (*iter != nullptr) {
             node = *iter;   
         }
         print_node(node, postfix, os);
-    }
-
-    void print_infix(std::ostream& os = std::cout) {
-        if (!root) {
-            return;
-        }
-        Node* tmp = root;
-        if (!tmp->left) {
-            os << root->value;
-        }
-        while(tmp->left) {
-            os << "(";
-            tmp = tmp->left;
-        }
-        while (tmp->parent) {
-            if (tmp->right) {
-                os << tmp->value;
-                tmp = most_left(tmp->right);
-            }
-            else if (tmp->parent->left == tmp) {
-                os << tmp->value;
-                tmp = tmp->parent;
-                if (tmp == root && tmp->right) {
-                    os << root->value;
-                    tmp = root->right;
-                    while (tmp->left) {
-                        os << "(";
-                        tmp = tmp->left;
-                    }
-                }
-            }
-            else if (tmp->parent->right == tmp) {
-                os << tmp->value;
-                while (tmp->parent && tmp->parent->right == tmp) {
-                    tmp = tmp->parent;
-                    os << ")";
-                }
-                if (tmp->parent) {
-                    tmp = tmp->parent;
-                    if (tmp == root && tmp->right) {
-                        os << root->value;
-                        tmp = tmp->right;
-                        while (tmp->left) {
-                            os << "(";
-                            tmp = tmp->left;
-                        }
-                    }
-                }
-            }
-        }
     }
 
     class Iterator {
@@ -293,6 +238,7 @@ public:
         public:
             Iterator(Node* ptr = nullptr) : ptr(ptr) {}
             Iterator& operator++() {
+                assert(ptr != nullptr);
                 Node* tmp = ptr;
                 if (tmp->right && operators.count(tmp->right->value)) {
                     tmp = most_left_operator(tmp->right);
@@ -345,7 +291,7 @@ public:
 };
 
 std::ostream& operator<<(std::ostream& os, BinaryOperationTree& tree) {
-    tree.print_infix(os);
+    tree.print(os);
     return os;
 }
 
@@ -363,6 +309,8 @@ int main() {
     //cout << s << endl;
     BinaryOperationTree tree(s);
     std::cout << tree << std::endl;
+    tree.print(std::cout, true);
+    std::cout << std::endl;
     /*
     tree = "(1 + 2 + 3 + 4) * 5";
     std::cout << tree << std::endl;
@@ -373,21 +321,21 @@ int main() {
     */
     std::cout << tree.calc() << std::endl;
     auto it = tree.begin();
-    tree.print(it);
+    tree.print(std::cout, false, it);
     std::cout << std::endl;
-    tree.print(it, true);
-    std::cout << std::endl;
-    std::cout << tree.calc(it) << std::endl;
-    ++it;
-    tree.print(it);
-    std::cout << std::endl;
-    tree.print(it, true);
+    tree.print(std::cout, true, it);
     std::cout << std::endl;
     std::cout << tree.calc(it) << std::endl;
     ++it;
-    tree.print(it);
+    tree.print(std::cout, false, it);
     std::cout << std::endl;
-    tree.print(it, true);
+    tree.print(std::cout, true, it);
+    std::cout << std::endl;
+    std::cout << tree.calc(it) << std::endl;
+    ++it;
+    tree.print(std::cout, false, it);
+    std::cout << std::endl;
+    tree.print(std::cout, true, it);
     std::cout << std::endl;
     std::cout << tree.calc(it) << std::endl;
     return 0;
