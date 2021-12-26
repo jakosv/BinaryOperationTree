@@ -21,14 +21,17 @@ class BinaryOperationTree {
 private:
     Node* root;
 
-    std::vector<std::string> parse_Operation(std::string& str) {
+    std::vector<std::string> parse_operation(std::string& str) {
         std::vector<std::string> res;
         std::string number;
         bool was_digit = false;
+        bool was_operator = true;
+        char last_operator;
         for (size_t i = 0; i < str.size(); i++) {
             if (isdigit(str[i])) {
                 number += str[i];
                 was_digit = true;
+                was_operator = false;
             }
             else if (operators.count(std::string(1, str[i]))){
                 if (was_digit) {
@@ -36,7 +39,14 @@ private:
                     was_digit = false;
                     number = "";
                 }
+                else if (was_operator && last_operator != ')') {
+                    if (str[i] == '-' || str[i] == '+') {
+                        res.push_back("0");
+                    }
+                }
                 res.push_back(std::string(1, str[i]));
+                was_operator = true;
+                last_operator = str[i];
             }
         }
         if (was_digit) {
@@ -159,7 +169,7 @@ public:
 
     BinaryOperationTree(std::string& str)
     {
-        std::vector<std::string> infix_expr = parse_Operation(str);
+        std::vector<std::string> infix_expr = parse_operation(str);
         std::vector<std::string> postfix_expr = infix_to_postfix(infix_expr);
         std::stack<Node*> stack_nodes;
         for (size_t i = 0; i < postfix_expr.size(); i++) {
@@ -181,7 +191,7 @@ public:
 
     BinaryOperationTree& operator=(std::string str) {
         clear();
-        std::vector<std::string> infix_expr = parse_Operation(str);
+        std::vector<std::string> infix_expr = parse_operation(str);
         std::vector<std::string> postfix_expr = infix_to_postfix(infix_expr);
         std::stack<Node*> stack_nodes;
         for (size_t i = 0; i < postfix_expr.size(); i++) {
@@ -229,8 +239,8 @@ public:
     class Iterator {
         private:
             Node* ptr;
-            Node* most_left_operator(Node* node) {
-                while (node->left && operators.count(node->left->value)) {
+            Node* most_left(Node* node) {
+                while (node->left) {
                     node = node->left;
                 }
                 return node;
@@ -240,23 +250,19 @@ public:
             Iterator& operator++() {
                 assert(ptr != nullptr);
                 Node* tmp = ptr;
-                if (tmp->right && operators.count(tmp->right->value)) {
-                    tmp = most_left_operator(tmp->right);
+                if (!tmp->parent) {
+                    ptr = nullptr;
                 }
-                else {
-                    while (tmp->parent && tmp->parent->right == tmp) {
-                        tmp = tmp->parent;
-                    }
-                    if (!tmp->parent) {
-                        ptr = nullptr;
-                    }
-                    else {
-                        tmp = tmp->parent;
-                        if (tmp->right && operators.count(tmp->right->value)) {
-                            tmp = most_left_operator(tmp->right);
-                        }
+                else if (tmp->parent && tmp->parent->left == tmp) {
+                    tmp = tmp->parent;
+                    if (tmp->right) {
+                        tmp = most_left(tmp->right);
                         ptr = tmp;
                     }
+                    ptr = tmp;
+                }
+                else {
+                    ptr = tmp->parent;
                 }
                 return *this;
             }
@@ -270,17 +276,24 @@ public:
             Node* operator*() {
                 return ptr;
             }
+
+            bool operator==(const Iterator& iter) {
+                return (ptr == iter.ptr);
+            }
+
+            bool operator!=(const Iterator& iter) {
+                return (ptr != iter.ptr);
+            }
+
     };
 
     Iterator begin() {
         Node* tmp = root;
-        if (root->left && operators.count(root->left->value)) {
+        if (root->left) {
             tmp = most_left(root);
-            tmp = tmp->parent;
         }
-        else if (root->right && operators.count(root->right->value)) {
+        else if (root->right) {
             tmp = most_left(root->right);
-            tmp = tmp->parent;
         }
         return Iterator(tmp);
     }
@@ -311,6 +324,11 @@ int main() {
     std::cout << tree << std::endl;
     tree.print(std::cout, true);
     std::cout << std::endl;
+    for (auto it = tree.begin(); it != tree.end(); it++) {
+        tree.print(std::cout, false, it);
+        std::cout << " = " << tree.calc(it) << std::endl;
+    }
+    return 0;
     /*
     tree = "(1 + 2 + 3 + 4) * 5";
     std::cout << tree << std::endl;
