@@ -6,8 +6,15 @@
 #include <cmath>
 #include <cassert>
 
-std::map<std::string, int> operators = {{"(", 0}, {")", 1}, {"+", 2}, {"-", 2}, 
-    {"*", 3}, {"/", 3}, {"^", 4}};
+std::map<std::string, int> operation_priority = {
+    {"(", 0}, 
+    {")", 1}, 
+    {"+", 2}, 
+    {"-", 2}, 
+    {"*", 3}, 
+    {"/", 3}, 
+    {"^", 4}
+};
 
 struct Node {
     std::string value;
@@ -21,32 +28,32 @@ class BinaryOperationTree {
 private:
     Node* root;
 
-    std::vector<std::string> parse_operation(std::string& str) {
+    std::vector<std::string> parse_expression(std::string& str) {
         std::vector<std::string> res;
         std::string number;
         bool was_digit = false;
-        bool was_operator = true;
-        char last_operator;
+        bool was_operation = true;
+        char last_operation;
         for (size_t i = 0; i < str.size(); i++) {
             if (isdigit(str[i])) {
                 number += str[i];
                 was_digit = true;
-                was_operator = false;
+                was_operation = false;
             }
-            else if (operators.count(std::string(1, str[i]))){
+            else if (operation_priority.count(std::string(1, str[i]))){
                 if (was_digit) {
                     res.push_back(number); 
                     was_digit = false;
                     number = "";
                 }
-                else if (was_operator && last_operator != ')') {
+                else if (was_operation && last_operation != ')') {
                     if (str[i] == '-' || str[i] == '+') {
                         res.push_back("0");
                     }
                 }
                 res.push_back(std::string(1, str[i]));
-                was_operator = true;
-                last_operator = str[i];
+                was_operation = true;
+                last_operation = str[i];
             }
         }
         if (was_digit) {
@@ -59,36 +66,36 @@ private:
                                         const std::vector<std::string>& infix) 
     {
         std::vector<std::string> res;
-        std::stack<std::string> stack_operators;
+        std::stack<std::string> stack_operation_priority;
         for (size_t i = 0; i < infix.size(); i++) {
             if (isdigit(infix[i][0])) {
                 res.push_back(infix[i]);
             }
             else if (infix[i] == "(") {
-                stack_operators.push(infix[i]);
+                stack_operation_priority.push(infix[i]);
             }
             else if (infix[i] == ")") {
-                while (!stack_operators.empty() &&
-                        stack_operators.top() != "(")
+                while (!stack_operation_priority.empty() &&
+                        stack_operation_priority.top() != "(")
                 {
-                    res.push_back(stack_operators.top());
-                    stack_operators.pop();
+                    res.push_back(stack_operation_priority.top());
+                    stack_operation_priority.pop();
                 }
-                stack_operators.pop();
+                stack_operation_priority.pop();
             }
-            else if (operators.count(infix[i])) {
-                while (!stack_operators.empty() &&
-                    operators[infix[i]] <= operators[stack_operators.top()])
+            else if (operation_priority.count(infix[i])) {
+                while (!stack_operation_priority.empty() &&
+                    operation_priority[infix[i]] <= operation_priority[stack_operation_priority.top()])
                 {
-                    res.push_back(stack_operators.top());
-                    stack_operators.pop();
+                    res.push_back(stack_operation_priority.top());
+                    stack_operation_priority.pop();
                 }
-                stack_operators.push(infix[i]);
+                stack_operation_priority.push(infix[i]);
             }
         }
-        while (!stack_operators.empty()) {
-            res.push_back(stack_operators.top());
-            stack_operators.pop();
+        while (!stack_operation_priority.empty()) {
+            res.push_back(stack_operation_priority.top());
+            stack_operation_priority.pop();
         }
         return res;
     }
@@ -110,7 +117,7 @@ private:
     }
 
     double calc_node(Node* node) {
-        if (operators.count(node->value)) {
+        if (operation_priority.count(node->value)) {
             double left = calc_node(node->left);
             double right = calc_node(node->right);
             std::string oper = node->value;
@@ -169,11 +176,11 @@ public:
 
     BinaryOperationTree(std::string& str)
     {
-        std::vector<std::string> infix_expr = parse_operation(str);
+        std::vector<std::string> infix_expr = parse_expression(str);
         std::vector<std::string> postfix_expr = infix_to_postfix(infix_expr);
         std::stack<Node*> stack_nodes;
         for (size_t i = 0; i < postfix_expr.size(); i++) {
-            if (operators.count(postfix_expr[i])) {
+            if (operation_priority.count(postfix_expr[i])) {
                 Node* right = stack_nodes.top();
                 stack_nodes.pop();
                 Node* left = stack_nodes.top();
@@ -191,11 +198,11 @@ public:
 
     BinaryOperationTree& operator=(std::string str) {
         clear();
-        std::vector<std::string> infix_expr = parse_operation(str);
+        std::vector<std::string> infix_expr = parse_expression(str);
         std::vector<std::string> postfix_expr = infix_to_postfix(infix_expr);
         std::stack<Node*> stack_nodes;
         for (size_t i = 0; i < postfix_expr.size(); i++) {
-            if (operators.count(postfix_expr[i])) {
+            if (operation_priority.count(postfix_expr[i])) {
                 Node* right = stack_nodes.top();
                 stack_nodes.pop();
                 Node* left = stack_nodes.top();
