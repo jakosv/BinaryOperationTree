@@ -85,7 +85,8 @@ private:
             }
             else if (operation_priority.count(infix[i])) {
                 while (!stack_operation_priority.empty() &&
-                    operation_priority[infix[i]] <= operation_priority[stack_operation_priority.top()])
+                    operation_priority[infix[i]] <= 
+                            operation_priority[stack_operation_priority.top()])
                 {
                     res.push_back(stack_operation_priority.top());
                     stack_operation_priority.pop();
@@ -196,7 +197,7 @@ public:
         root = stack_nodes.top();
     }
 
-    BinaryOperationTree& operator=(std::string str) {
+    BinaryOperationTree& operator=(std::string& str) {
         clear();
         std::vector<std::string> infix_expr = parse_expression(str);
         std::vector<std::string> postfix_expr = infix_to_postfix(infix_expr);
@@ -262,10 +263,7 @@ public:
                 }
                 else if (tmp->parent && tmp->parent->left == tmp) {
                     tmp = tmp->parent;
-                    if (tmp->right) {
-                        tmp = most_left(tmp->right);
-                        ptr = tmp;
-                    }
+                    tmp = most_left(tmp->right);
                     ptr = tmp;
                 }
                 else {
@@ -291,7 +289,6 @@ public:
             bool operator!=(const Iterator& iter) {
                 return (ptr != iter.ptr);
             }
-
     };
 
     Iterator begin() {
@@ -306,7 +303,7 @@ public:
     }
 
     Iterator end() {
-        return Iterator();
+        return Iterator(nullptr);
     }
 };
 
@@ -323,18 +320,26 @@ std::istream& operator>>(std::istream& is, BinaryOperationTree& tree) {
 }
 
 int main() {
+    std::cout << std::endl;
+    std::cout << std::endl;
     std::string s;
     getline(std::cin, s);
     //s = infix_to_postfix(s);
     //cout << s << endl;
     BinaryOperationTree tree(s);
-    std::cout << tree << std::endl;
+    std::cout << "Infix form: " << tree << std::endl;
+    std::cout << "Postfix form: ";
     tree.print(std::cout, true);
     std::cout << std::endl;
+    std::cout << "Result: " << tree.calc() << std::endl;
+    std::cout << "Iterator test: " << std::endl;
     for (auto it = tree.begin(); it != tree.end(); it++) {
         tree.print(std::cout, false, it);
         std::cout << " = " << tree.calc(it) << std::endl;
     }
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
     return 0;
     /*
     tree = "(1 + 2 + 3 + 4) * 5";
