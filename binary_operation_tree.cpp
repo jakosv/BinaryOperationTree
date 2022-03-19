@@ -28,7 +28,7 @@ class BinaryOperationTree {
 private:
     Node* root;
 
-    std::vector<std::string> parse_expression(std::string& str) {
+    std::vector<std::string> parse_expression(const std::string& str) const {
         std::vector<std::string> res;
         std::string number;
         bool was_digit = false;
@@ -64,44 +64,45 @@ private:
 
     std::vector<std::string> infix_to_postfix(
                                         const std::vector<std::string>& infix) 
+                                                                        const
     {
         std::vector<std::string> res;
-        std::stack<std::string> stack_operation_priority;
+        std::stack<std::string> stack_operation;
         for (size_t i = 0; i < infix.size(); i++) {
             if (isdigit(infix[i][0])) {
                 res.push_back(infix[i]);
             }
             else if (infix[i] == "(") {
-                stack_operation_priority.push(infix[i]);
+                stack_operation.push(infix[i]);
             }
             else if (infix[i] == ")") {
-                while (!stack_operation_priority.empty() &&
-                        stack_operation_priority.top() != "(")
+                while (!stack_operation.empty() 
+                        && stack_operation.top() != "(")
                 {
-                    res.push_back(stack_operation_priority.top());
-                    stack_operation_priority.pop();
+                    res.push_back(stack_operation.top());
+                    stack_operation.pop();
                 }
-                stack_operation_priority.pop();
+                stack_operation.pop();
             }
             else if (operation_priority.count(infix[i])) {
-                while (!stack_operation_priority.empty() &&
+                while (!stack_operation.empty() &&
                     operation_priority[infix[i]] <= 
-                            operation_priority[stack_operation_priority.top()])
+                            operation_priority[stack_operation.top()])
                 {
-                    res.push_back(stack_operation_priority.top());
-                    stack_operation_priority.pop();
+                    res.push_back(stack_operation.top());
+                    stack_operation.pop();
                 }
-                stack_operation_priority.push(infix[i]);
+                stack_operation.push(infix[i]);
             }
         }
-        while (!stack_operation_priority.empty()) {
-            res.push_back(stack_operation_priority.top());
-            stack_operation_priority.pop();
+        while (!stack_operation.empty()) {
+            res.push_back(stack_operation.top());
+            stack_operation.pop();
         }
         return res;
     }
 
-    Node* most_left(Node* from) {
+    Node* most_left(Node* from) const {
         while (from->left) {
             from = from->left;
         }
@@ -117,7 +118,7 @@ private:
         delete node;
     }
 
-    double calc_node(Node* node) {
+    double calc_node(const Node* node) const {
         if (operation_priority.count(node->value)) {
             double left = calc_node(node->left);
             double right = calc_node(node->right);
@@ -141,7 +142,7 @@ private:
         return (std::stoi(node->value));
     }
 
-    void print_node(Node* node, bool postfix, std::ostream& os) {
+    void print_node(const Node* node, bool postfix, std::ostream& os) const {
         if (!postfix) {
             if (node->left) {
                 os << "(";
@@ -175,7 +176,7 @@ public:
         this->clear(); 
     }
 
-    BinaryOperationTree(std::string& str)
+    BinaryOperationTree(const std::string& str)
     {
         std::vector<std::string> infix_expr = parse_expression(str);
         std::vector<std::string> postfix_expr = infix_to_postfix(infix_expr);
@@ -197,7 +198,7 @@ public:
         root = stack_nodes.top();
     }
 
-    BinaryOperationTree& operator=(std::string& str) {
+    BinaryOperationTree& operator=(const std::string& str) {
         clear();
         std::vector<std::string> infix_expr = parse_expression(str);
         std::vector<std::string> postfix_expr = infix_to_postfix(infix_expr);
@@ -225,7 +226,7 @@ public:
         root = nullptr;
     }
 
-    double calc(Iterator iter = Iterator(nullptr)) {
+    double calc(Iterator iter = Iterator(nullptr)) const {
         assert(root != nullptr);
         if (*iter == nullptr) {
             return calc_node(root); 
@@ -234,7 +235,7 @@ public:
     }
 
     void print(std::ostream& os = std::cout, bool postfix = false,
-        Iterator iter = Iterator(nullptr))
+        Iterator iter = Iterator(nullptr)) const
     {
         assert(root != nullptr);
         Node* node = root;
@@ -247,7 +248,7 @@ public:
     class Iterator {
         private:
             Node* ptr;
-            Node* most_left(Node* node) {
+            Node* most_left(Node* node) const {
                 while (node->left) {
                     node = node->left;
                 }
@@ -282,16 +283,16 @@ public:
                 return ptr;
             }
 
-            bool operator==(const Iterator& iter) {
+            bool operator==(const Iterator& iter) const {
                 return (ptr == iter.ptr);
             }
 
-            bool operator!=(const Iterator& iter) {
+            bool operator!=(const Iterator& iter) const {
                 return (ptr != iter.ptr);
             }
     };
 
-    Iterator begin() {
+    Iterator begin() const {
         Node* tmp = root;
         if (root->left) {
             tmp = most_left(root);
@@ -302,12 +303,12 @@ public:
         return Iterator(tmp);
     }
 
-    Iterator end() {
+    Iterator end() const {
         return Iterator(nullptr);
     }
 };
 
-std::ostream& operator<<(std::ostream& os, BinaryOperationTree& tree) {
+std::ostream& operator<<(std::ostream& os, const BinaryOperationTree& tree) {
     tree.print(os);
     return os;
 }
@@ -322,11 +323,8 @@ std::istream& operator>>(std::istream& is, BinaryOperationTree& tree) {
 int main() {
     std::cout << std::endl;
     std::cout << std::endl;
-    std::string s;
-    getline(std::cin, s);
-    //s = infix_to_postfix(s);
-    //cout << s << endl;
-    BinaryOperationTree tree(s);
+    BinaryOperationTree tree;
+    std::cin >> tree;
     std::cout << "Infix form: " << tree << std::endl;
     std::cout << "Postfix form: ";
     tree.print(std::cout, true);
@@ -340,33 +338,5 @@ int main() {
     std::cout << std::endl;
     std::cout << std::endl;
     std::cout << std::endl;
-    return 0;
-    /*
-    tree = "(1 + 2 + 3 + 4) * 5";
-    std::cout << tree << std::endl;
-    std::cin >> tree;
-    std::cout << tree << std::endl;
-    tree.clear();
-    std::cout << tree << std::endl;
-    */
-    std::cout << tree.calc() << std::endl;
-    auto it = tree.begin();
-    tree.print(std::cout, false, it);
-    std::cout << std::endl;
-    tree.print(std::cout, true, it);
-    std::cout << std::endl;
-    std::cout << tree.calc(it) << std::endl;
-    ++it;
-    tree.print(std::cout, false, it);
-    std::cout << std::endl;
-    tree.print(std::cout, true, it);
-    std::cout << std::endl;
-    std::cout << tree.calc(it) << std::endl;
-    ++it;
-    tree.print(std::cout, false, it);
-    std::cout << std::endl;
-    tree.print(std::cout, true, it);
-    std::cout << std::endl;
-    std::cout << tree.calc(it) << std::endl;
     return 0;
 }
